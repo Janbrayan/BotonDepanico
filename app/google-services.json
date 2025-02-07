@@ -1,0 +1,93 @@
+{
+  "project_info": {
+    "project_number": "749541236547",
+    "firebase_url": "https://botonpanico-418f0-default-rtdb.firebaseio.com",
+    "project_id": "botonpanico-418f0",
+    "storage_bucket": "botonpanico-418f0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:749541236547:android:e3a58b59777804b35dd9f6",
+        "android_client_info": {
+          "package_name": "com.example.boton_panico"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "749541236547-9unu5utraee8lttbqkf6mv20ptamk7c2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.boton_panico",
+            "certificate_hash": "da61fac8a311ce414c089698d12292a145c74f77"
+          }
+        },
+        {
+          "client_id": "749541236547-m6dr1edgve7q0f1kfmcuoo0lif4rcs7c.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.boton_panico",
+            "certificate_hash": "42f23b84eab489e7935b39e819d641048b30a476"
+          }
+        },
+        {
+          "client_id": "749541236547-i54bdt5dhkkk84blt19uq4c6vc2pidie.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBnk8_8rIPZRBsAMgqa7QWLs1uX7fk3H_s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "749541236547-i54bdt5dhkkk84blt19uq4c6vc2pidie.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:749541236547:android:cc5d71084c4d755f5dd9f6",
+        "android_client_info": {
+          "package_name": "com.example.botondepanico"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "749541236547-2hll46t7h6hve66ps5eo2ma5tq1t97g5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.botondepanico",
+            "certificate_hash": "42f23b84eab489e7935b39e819d641048b30a476"
+          }
+        },
+        {
+          "client_id": "749541236547-i54bdt5dhkkk84blt19uq4c6vc2pidie.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBnk8_8rIPZRBsAMgqa7QWLs1uX7fk3H_s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "749541236547-i54bdt5dhkkk84blt19uq4c6vc2pidie.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
