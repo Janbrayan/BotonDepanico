@@ -2,51 +2,51 @@ package com.example.botondepanico.ui.theme.main
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 
 @Composable
 fun BottomNavBar(navController: NavController) {
-    // Detectamos la ruta actual para marcar el ítem seleccionado
-    val currentRoute = currentRoute(navController)
+    val currentBackStackEntry = navController.currentBackStackEntryAsState()
+    val currentRoute = currentBackStackEntry.value?.destination?.route
 
     NavigationBar {
-        // Ítem "home"
+        // Item HOME
         NavigationBarItem(
-            icon = { Icon(Icons.Default.Home, contentDescription = "Inicio") },
-            label = { Text("Inicio") },
+            icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
+            label = { Text("Home") },
             selected = currentRoute == "home",
             onClick = {
-                // Evitamos recargar "home" si ya estamos en "home"
                 if (currentRoute != "home") {
                     navController.navigate("home")
                 }
             }
         )
-        // Ítem "panic"
+        // Item PANIC
         NavigationBarItem(
-            icon = { Icon(Icons.Default.Warning, contentDescription = "Pánico") },
-            label = { Text("Pánico") },
+            icon = { Icon(Icons.Default.Warning, contentDescription = "Panic") },
+            label = { Text("Panic") },
             selected = currentRoute == "panic",
             onClick = {
-                // Evitamos recargar "panic" si ya estamos en "panic"
                 if (currentRoute != "panic") {
                     navController.navigate("panic")
                 }
             }
         )
+        // Item SETTINGS
+        NavigationBarItem(
+            icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
+            label = { Text("Settings") },
+            selected = currentRoute == "settings",
+            onClick = {
+                if (currentRoute != "settings") {
+                    navController.navigate("settings")
+                }
+            }
+        )
     }
-}
-
-/**
- * Retorna la ruta activa en el [navController].
- */
-@Composable
-fun currentRoute(navController: NavController): String? {
-    val backStackEntry by navController.currentBackStackEntryAsState()
-    return backStackEntry?.destination?.route
 }

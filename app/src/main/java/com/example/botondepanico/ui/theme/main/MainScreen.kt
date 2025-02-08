@@ -11,26 +11,33 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.botondepanico.ui.theme.home.HomeScreen
 import com.example.botondepanico.ui.theme.panic.PanicScreen
+import com.example.botondepanico.ui.theme.settings.AdvancedSettingsScreen
 
 @Composable
 fun MainScreen(parentNavController: NavController) {
-    // Controlador de navegación local para Home, Panic, etc.
+    // Controlador de navegación local para Home, Panic, Settings
     val bottomNavController = rememberNavController()
 
     Scaffold(
-        // Menú inferior
         bottomBar = {
             BottomNavBar(bottomNavController)
         }
     ) { innerPadding ->
-        // Contenido principal con un NavHost anidado
         Box(modifier = Modifier.padding(innerPadding)) {
             NavHost(
                 navController = bottomNavController,
                 startDestination = "home"
             ) {
-                composable("home") { HomeScreen() }
-                composable("panic") { PanicScreen() }
+                composable("home") {
+                    HomeScreen()
+                }
+                composable("panic") {
+                    PanicScreen()
+                }
+                // Agregamos la nueva ruta "settings"
+                composable("settings") {
+                    AdvancedSettingsScreen()
+                }
             }
         }
     }

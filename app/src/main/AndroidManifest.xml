@@ -4,10 +4,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.example.botondepanico">
 
-    <!-- Permisos de ubicación (ajusta según tus necesidades) -->
+    <!-- Permisos de ubicación -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
+    <!-- Permiso para Foreground Service de mediaPlayback (Android 14+) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
     <!-- Vibración -->
@@ -19,11 +21,18 @@
     <!-- Foreground Service (Android 9+) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
-    <!-- Internet -->
-    <uses-permission android:name="android.permission.INTERNET" />
-
     <!-- Para Android 14+ si inicias un servicio de ubicación -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+
+    <!-- Permiso para cambiar la Política de Notificaciones (No Molestar). -->
+    <uses-permission
+        android:name="android.permission.ACCESS_NOTIFICATION_POLICY"
+        tools:ignore="ProtectedPermissions" />
+
+    <!-- Permiso para recibir el evento de BOOT_COMPLETED (reinicio) -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
 
     <application
         android:allowBackup="true"
@@ -70,6 +79,22 @@
             android:exported="false"
             android:foregroundServiceType="mediaPlayback"
             tools:ignore="ForegroundServicePermission" />
+
+        <service
+            android:name=".ui.theme.alarm.FixedAlertService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync"
+            tools:ignore="ForegroundServicePermission" />
+
+        <!-- Receiver para reiniciar la app tras BOOT_COMPLETED (si AutoStart está permitido) -->
+        <receiver
+            android:name=".broadcast.BootReceiver"
+            android:exported="true"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
 
     </application>
 

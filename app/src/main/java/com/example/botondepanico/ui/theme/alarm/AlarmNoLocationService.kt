@@ -2,6 +2,7 @@ package com.example.botondepanico.ui.theme.alarm
 
 import android.app.*
 import android.content.Intent
+import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.os.Build
@@ -9,16 +10,18 @@ import android.os.IBinder
 import android.os.VibrationEffect
 import android.os.Vibrator
 import androidx.core.app.NotificationCompat
+import com.example.botondepanico.MainActivity
 import com.example.botondepanico.R
 
 /**
- * Servicio de primer plano que reproduce sonido de ALARMA en STREAM_ALARM,
- * vibra y lanza una Full-Screen Activity aun si el teléfono está bloqueado.
+ * Servicio de primer plano que reproduce sonido de ALARMA (tipo llamada) en STREAM_ALARM,
+ * vibra y lanza una Activity en pantalla completa aun si el teléfono está bloqueado.
  *
- * Declarar en AndroidManifest:
+ * En tu AndroidManifest.xml:
  * <service
  *   android:name=".ui.theme.alarm.AlarmNoLocationService"
- *   android:exported="false" />
+ *   android:exported="false"
+ *   android:foregroundServiceType="mediaPlayback" />
  */
 class AlarmNoLocationService : Service() {
 
@@ -35,24 +38,33 @@ class AlarmNoLocationService : Service() {
         // Iniciamos Vibrator
         vibrator = getSystemService(VIBRATOR_SERVICE) as Vibrator
 
-        // Construimos el MediaPlayer de forma manual para usar STREAM_ALARM
+        // Configuramos el MediaPlayer (preferible usar AudioAttributes en Android L+)
         mediaPlayer = MediaPlayer().apply {
             val afd = resources.openRawResourceFd(R.raw.sirena)
             setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
             afd.close()
 
-            setAudioStreamType(AudioManager.STREAM_ALARM) // Suena incluso en silencio normal
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                val audioAttrs = AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+                setAudioAttributes(audioAttrs)
+            } else {
+                @Suppress("DEPRECATION")
+                setAudioStreamType(AudioManager.STREAM_ALARM)
+            }
+
             isLooping = true
             prepare()
         }
     }
 
-    override fun onStartCommand(intent: Intent?, serviceFlags: Int, startId: Int): Int {
-        // Preparamos un Intent para la Activity full-screen
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Preparamos un Intent para la Activity full-screen (tipo llamada)
         val fullScreenIntent = Intent(this, AlarmFullScreenActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
         }
-
         val fullScreenPendingIntent = PendingIntent.getActivity(
             this,
             0,
@@ -75,7 +87,7 @@ class AlarmNoLocationService : Service() {
             .setOngoing(true)
             .build()
 
-        // Arrancamos en primer plano para que no lo maten en background
+        // Iniciamos el servicio en primer plano para que no sea matado en background
         startForeground(notificationId, notification)
 
         // Arrancamos sirena y vibración
@@ -92,22 +104,22 @@ class AlarmNoLocationService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     /**
-     * Inicia el sonido de sirena (STREAM_ALARM) y vibración en bucle.
+     * Inicia la sirena (AudioAttributes USAGE_ALARM si Lollipop+, sino STREAM_ALARM)
+     * y vibra indefinidamente 1s, pausa 1s.
      */
     private fun startAlarm() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val pattern = longArrayOf(0, 1000, 1000) // vibra 1s, pausa 1s
+            val pattern = longArrayOf(0, 1000, 1000)
             vibrator?.vibrate(VibrationEffect.createWaveform(pattern, 0))
         } else {
             @Suppress("DEPRECATION")
             vibrator?.vibrate(longArrayOf(0, 1000, 1000), 0)
         }
-
         mediaPlayer?.start()
     }
 
     /**
-     * Detiene sonido y vibración.
+     * Detiene la sirena y la vibración.
      */
     private fun stopAlarm() {
         vibrator?.cancel()
@@ -117,8 +129,7 @@ class AlarmNoLocationService : Service() {
     }
 
     /**
-     * Crea un canal con IMPORTANCE_HIGH para permitir heads-up y full-screen
-     * en dispositivos con Android 8+.
+     * Crea un canal IMPORTANCE_HIGH para permitir heads-up / full-screen en Android 8+.
      */
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -129,8 +140,7 @@ class AlarmNoLocationService : Service() {
             ).apply {
                 description = "Servicio de alarma y pantalla completa"
             }
-            val manager = getSystemService(NotificationManager::class.java)
-            manager?.createNotificationChannel(channel)
+            getSystemService(NotificationManager::class.java)?.createNotificationChannel(channel)
         }
     }
 }

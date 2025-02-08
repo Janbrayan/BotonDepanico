@@ -4,13 +4,13 @@ import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.content.Intent
 import android.media.AudioAttributes
 import android.media.RingtoneManager
 import android.os.Build
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import android.content.Intent
 import com.example.botondepanico.R
 import com.example.botondepanico.ui.theme.alarm.AlarmNoLocationService
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -24,10 +24,10 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         when (type) {
             "ALARM_TRIGGERED" -> {
-                // Muestra notificación local con sonido/vibración (si el usuario lo permite)
+                // Muestra notificación local (opcional) con sonido/vibración si el usuario lo permite
                 showNotification("Alerta Activada", "Alguien encendió la alarma.")
 
-                // Inicia el servicio que reproduce sirena/vibración (no usa ubicación)
+                // Inicia el servicio que reproduce sirena/vibración
                 val intent = Intent(this, AlarmNoLocationService::class.java)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     startForegroundService(intent)
@@ -40,7 +40,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                 // Muestra notificación de “Alerta detenida”
                 showNotification("Alerta Detenida", "La alarma fue detenida.")
 
-                // Detiene la sirena/vibración
+                // Detiene el servicio (sirena y vibración)
                 val intent = Intent(this, AlarmNoLocationService::class.java)
                 stopService(intent)
             }
@@ -52,25 +52,20 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
      * Para Android 13+ se requiere el permiso POST_NOTIFICATIONS en tiempo de ejecución.
      */
     private fun showNotification(title: String, message: String) {
-        // Verificar permiso de notificaciones en Android 13+ (API 33)
+        // Chequeamos el permiso de POST_NOTIFICATIONS en Android 13+ (API 33)
         val canNotify = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.POST_NOTIFICATIONS
             ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-        } else {
-            // En versiones anteriores no se requiere POST_NOTIFICATIONS
-            true
-        }
+        } else true
 
         if (!canNotify) return
 
-        // Canal de notificaciones
         val channelId = "fcm_alert_channel"
         val channelName = "Alerta de FCM"
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Configuramos IMPORTANCE_HIGH para notificaciones heads-up
             val channel = NotificationChannel(
                 channelId,
                 channelName,
@@ -78,7 +73,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             ).apply {
                 description = "Notificaciones de alerta con sonido/vibración"
 
-                // Asignar un sonido para el canal si deseas
+                // Definir un sonido para el canal
                 val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
                 setSound(
                     uri,
@@ -88,7 +83,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                         .build()
                 )
 
-                // Habilitar vibración (pattern simple)
+                // Vibración sencilla
                 enableVibration(true)
                 vibrationPattern = longArrayOf(0, 500, 200, 500)
             }
@@ -98,16 +93,15 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         // Construimos la notificación
         val notification: Notification = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_notification)  // ícono de tu app
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(message)
-            .setPriority(NotificationCompat.PRIORITY_MAX)   // Para < Android 8
+            .setPriority(NotificationCompat.PRIORITY_MAX) // Para < Android 8
             .setAutoCancel(true)
-            // Para versiones < Android 8, usar defaults
             .setDefaults(NotificationCompat.DEFAULT_SOUND or NotificationCompat.DEFAULT_VIBRATE)
             .build()
 
-        // Mostrar la notificación
+        // Mostramos la notificación con un ID único (System.currentTimeMillis().toInt())
         NotificationManagerCompat.from(this).notify(
             System.currentTimeMillis().toInt(),
             notification
