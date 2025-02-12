@@ -85,6 +85,9 @@
             android:exported="false"
             android:foregroundServiceType="dataSync"
             tools:ignore="ForegroundServicePermission" />
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDk8lh6tqyDwE8UVP4XHZrHBGRy29v5MWI" />
 
         <!-- Receiver para reiniciar la app tras BOOT_COMPLETED (si AutoStart está permitido) -->
         <receiver

@@ -73,6 +73,13 @@ dependencies {
     //implementation(libs.play.services.contextmanager)
     implementation(libs.firebase.database.ktx)
     implementation(libs.firebase.messaging.ktx)
+    implementation(libs.play.services.maps)
+    implementation(libs.volley)
+    implementation(libs.androidx.runner)
+    implementation(libs.play.services.fido)
+    implementation(libs.play.services.fido)
+    implementation(libs.firebase.storage.ktx)
+    implementation(libs.firebase.firestore.ktx)
 
     // Tests
     testImplementation(libs.junit)
@@ -83,4 +90,10 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation (libs.accompanist.permissions)
+    implementation (libs.android.maps.compose)
+    implementation (libs.coil.compose)
+    implementation (libs.maps.compose.vversion)
+    implementation (libs.android.maps.utils)
+
+
 }

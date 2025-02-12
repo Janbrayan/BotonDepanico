@@ -13,7 +13,7 @@ import com.example.botondepanico.ui.theme.auth.GoogleAuthViewModel
 import com.example.botondepanico.ui.theme.auth.GoogleLoginScreen
 import com.example.botondepanico.ui.theme.main.MainScreen
 import com.example.botondepanico.ui.theme.permissions.PermissionsScreen
-import com.example.botondepanico.ui.theme.settings.AdvancedSettingsScreen
+import com.example.botondepanico.settings.AdvancedSettingsScreen
 import com.example.botondepanico.utils.BatteryOptimizationHelper
 import com.google.firebase.auth.FirebaseAuth
 

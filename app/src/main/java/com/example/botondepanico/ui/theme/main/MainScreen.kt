@@ -9,9 +9,9 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.botondepanico.settings.AdvancedSettingsScreen
 import com.example.botondepanico.ui.theme.home.HomeScreen
 import com.example.botondepanico.ui.theme.panic.PanicScreen
-import com.example.botondepanico.ui.theme.settings.AdvancedSettingsScreen
 
 @Composable
 fun MainScreen(parentNavController: NavController) {
