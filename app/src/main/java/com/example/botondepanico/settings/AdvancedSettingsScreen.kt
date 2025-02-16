@@ -149,19 +149,19 @@ private fun ProfileSection(
 }
 
 /**
+ * - No muestra el mapa al inicio.
  * - Al presionar "Vincular Zona":
- *   1) Obtiene ubicación real (si hay permiso).
- *   2) Muestra mapa centrado en esa ubicación.
- *   3) Descarga & procesa KML en IO.
- *   4) Verifica si está dentro de un polígono => registra => oculta mapa,
- *     sino => "Fuera de todos los polígonos" => oculta mapa.
+ *   1) Ubicación real (si hay permiso),
+ *   2) Mapa centrado,
+ *   3) Descarga & procesa KML,
+ *   4) Si dentro del polígono => registra => oculta mapa,
+ *     si no => "Fuera de los polígonos" => oculta mapa.
  * - Solo registra 1 vez (si 'seccionActual' existe, no vuelve a mostrar el botón).
  */
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 private fun RegisterZoneSectionMultiKML() {
     val context = LocalContext.current
-    // Scope para corutinas
     val scope = rememberCoroutineScope()
 
     val fineLocationPermissionState = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -171,13 +171,13 @@ private fun RegisterZoneSectionMultiKML() {
     var userLat by remember { mutableStateOf(19.432608) }
     var userLng by remember { mutableStateOf(-99.133209) }
 
-    // KML
+    // KML URLs
     var kmlUrlList by remember { mutableStateOf(emptyList<String>()) }
 
-    // Sección del usuario
+    // Nombre de la zona detectada
     var userInsideName by remember { mutableStateOf("") }
 
-    // Ya está registrado
+    // Indica si ya está registrado
     var zoneAlreadyRegistered by remember { mutableStateOf(false) }
 
     // Control de cámara
@@ -185,15 +185,15 @@ private fun RegisterZoneSectionMultiKML() {
         position = CameraPosition.fromLatLngZoom(LatLng(userLat, userLng), 14f)
     }
 
-    // Mostrar/ocultar mapa
+    // Muestra/oculta el mapa
     var showMap by remember { mutableStateOf(false) }
-    // Evita múltiples detecciones
+    // Evitar múltiples detecciones
     var detectionDone by remember { mutableStateOf(false) }
 
     // Usuario actual
     val currentUser = FirebaseAuth.getInstance().currentUser
 
-    // Revisar si ya tiene 'seccionActual'
+    // 1) Checa si ya tiene 'seccionActual' en el doc raíz
     LaunchedEffect(currentUser) {
         currentUser?.let { user ->
             val db = Firebase.firestore
@@ -209,7 +209,7 @@ private fun RegisterZoneSectionMultiKML() {
         }
     }
 
-    // Descarga la lista de URLs KML (1 vez)
+    // 2) Descarga la lista de URLs KML
     LaunchedEffect(true) {
         val storageRef = Firebase.storage.reference.child("kmlFiles")
         try {
@@ -231,7 +231,7 @@ private fun RegisterZoneSectionMultiKML() {
                     kmlUrlList = tmpUrls
                     Log.d("KML", "Lista KML final: $kmlUrlList")
                 } else {
-                    Toast.makeText(context, "Error al obtener URLs de KML", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Ocurrió un error al obtener URLs de KML", Toast.LENGTH_SHORT).show()
                 }
             }
         } catch (e: Exception) {
@@ -256,8 +256,8 @@ private fun RegisterZoneSectionMultiKML() {
             if (zoneAlreadyRegistered) {
                 Text("Ya se ha registrado una zona.\nContacta al admin para cambiarla.")
             } else {
-                // Botón "Vincular Zona"
                 if (!showMap) {
+                    // Botón Vincular
                     Button(onClick = {
                         Log.d("PolygonCheck", "Botón 'Vincular Zona' presionado")
                         val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
@@ -297,6 +297,7 @@ private fun RegisterZoneSectionMultiKML() {
                             properties = MapProperties(isMyLocationEnabled = true),
                             uiSettings = MapUiSettings(myLocationButtonEnabled = true)
                         ) {
+                            // Efecto
                             MapEffect(kmlUrlList, userLat, userLng) { map ->
                                 scope.launch {
                                     if (kmlUrlList.isEmpty()) {
@@ -344,11 +345,11 @@ private fun RegisterZoneSectionMultiKML() {
                                             }
                                         }
 
-                                        // Al final
                                         if (foundName.isNullOrEmpty()) {
                                             Toast.makeText(context, "Fuera de todos los polígonos", Toast.LENGTH_SHORT).show()
                                             showMap = false
                                         } else {
+                                            // Se encontró el polígono => Registrar
                                             userInsideName = foundName as String
                                             val user = FirebaseAuth.getInstance().currentUser
                                             if (user == null) {
@@ -356,24 +357,58 @@ private fun RegisterZoneSectionMultiKML() {
                                                 showMap = false
                                                 return@launch
                                             }
-                                            // REGISTRAR EN FIRESTORE con set() (Crea si no existe)
+
+                                            // --------------------------------------------
+                                            // 1) Crear/actualizar el doc raíz en /users/{uid}
+                                            // --------------------------------------------
+                                            val userDataRoot = mapOf(
+                                                "uid" to user.uid,
+                                                "email" to (user.email ?: ""),
+                                                "displayName" to (user.displayName ?: ""),
+                                                "seccionActual" to userInsideName
+                                            )
                                             Firebase.firestore
                                                 .collection("users")
                                                 .document(user.uid)
-                                                .set(mapOf("seccionActual" to userInsideName), SetOptions.merge())
+                                                .set(userDataRoot, SetOptions.merge())
                                                 .addOnSuccessListener {
-                                                    Toast.makeText(
-                                                        context,
-                                                        "Se registró la zona: $userInsideName",
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
-                                                    zoneAlreadyRegistered = true
-                                                    showMap = false
+                                                    // --------------------------------------
+                                                    // 2) Guardar en subcolección "seccion"
+                                                    // --------------------------------------
+                                                    val userDataSub = mapOf(
+                                                        "uid" to user.uid,
+                                                        "email" to (user.email ?: ""),
+                                                        "displayName" to (user.displayName ?: ""),
+                                                        "seccionActual" to userInsideName
+                                                    )
+                                                    Firebase.firestore
+                                                        .collection("users")
+                                                        .document(user.uid)
+                                                        .collection("seccion")
+                                                        .document("usuarioSeccion")
+                                                        .set(userDataSub, SetOptions.merge())
+                                                        .addOnSuccessListener {
+                                                            Toast.makeText(
+                                                                context,
+                                                                "Se registró la zona: $userInsideName",
+                                                                Toast.LENGTH_SHORT
+                                                            ).show()
+                                                            zoneAlreadyRegistered = true
+                                                            showMap = false
+                                                        }
+                                                        .addOnFailureListener { e ->
+                                                            Toast.makeText(
+                                                                context,
+                                                                "Error al registrar zona (subcolección): ${e.message}",
+                                                                Toast.LENGTH_SHORT
+                                                            ).show()
+                                                            showMap = false
+                                                        }
                                                 }
                                                 .addOnFailureListener { e ->
                                                     Toast.makeText(
                                                         context,
-                                                        "Error al registrar zona: ${e.message}",
+                                                        "Error al registrar zona (doc raíz): ${e.message}",
                                                         Toast.LENGTH_SHORT
                                                     ).show()
                                                     showMap = false
@@ -396,8 +431,7 @@ private fun RegisterZoneSectionMultiKML() {
 }
 
 /**
- * Recorre recursivamente un `KmlContainer` (y sub-contenedores)
- * para saber si (userLat, userLng) está dentro de un polígono.
+ * Recorre contenedores y sub-contenedores para ver si (userLat, userLng) cae dentro de un polígono.
  * Retorna el nombre si lo encuentra.
  */
 private fun checkContainerRecursively(
@@ -405,7 +439,6 @@ private fun checkContainerRecursively(
     userLat: Double,
     userLng: Double
 ): String? {
-    // Revisamos placemarks del container
     Log.d("PolygonCheck", "Container '${container.containerId}' con placemarks: ${container.placemarks.count()}")
     for (placemark in container.placemarks) {
         val geometry = placemark.geometry
@@ -415,18 +448,14 @@ private fun checkContainerRecursively(
             val inside = PolyUtil.containsLocation(userLat, userLng, coords, true)
             Log.d("PolygonCheck", "inside=$inside")
             if (inside) {
-                // Devuelve el nombre
                 return placemark.getProperty("name") ?: "Sección X"
             }
         }
     }
-
-    // Revisar sub-contenedores recursivamente
     for (subContainer in container.containers) {
         val foundName = checkContainerRecursively(subContainer, userLat, userLng)
         if (foundName != null) return foundName
     }
-
     return null
 }
 

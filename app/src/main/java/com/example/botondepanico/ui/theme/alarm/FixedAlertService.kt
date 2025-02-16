@@ -49,6 +49,7 @@ class FixedAlertService : Service() {
 
     /**
      * Crea la notificación fija (ongoing) que indica "Monitoreando Alertas".
+     * Se oculta la hora con .setShowWhen(false) y .setWhen(0).
      */
     private fun buildPersistentNotification(): Notification {
         // Al pulsar la notificación, abrir MainActivity
@@ -73,6 +74,9 @@ class FixedAlertService : Service() {
             .setContentIntent(pendingIntent)
             .setPriority(NotificationCompat.PRIORITY_LOW)  // Baja prioridad para no molestar
             .setCategory(Notification.CATEGORY_SERVICE)
+            // Ocultar la hora en la notificación
+            .setShowWhen(false)
+            .setWhen(0)
             .build()
     }
 

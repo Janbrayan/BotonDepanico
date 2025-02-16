@@ -18,7 +18,7 @@ fun BottomNavBar(navController: NavController) {
         // Item HOME
         NavigationBarItem(
             icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
-            label = { Text("Home") },
+            label = { Text("Boton") },
             selected = currentRoute == "home",
             onClick = {
                 if (currentRoute != "home") {
@@ -29,7 +29,7 @@ fun BottomNavBar(navController: NavController) {
         // Item PANIC
         NavigationBarItem(
             icon = { Icon(Icons.Default.Warning, contentDescription = "Panic") },
-            label = { Text("Panic") },
+            label = { Text("Alertas") },
             selected = currentRoute == "panic",
             onClick = {
                 if (currentRoute != "panic") {
@@ -40,7 +40,7 @@ fun BottomNavBar(navController: NavController) {
         // Item SETTINGS
         NavigationBarItem(
             icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
-            label = { Text("Settings") },
+            label = { Text("Configuraciones") },
             selected = currentRoute == "settings",
             onClick = {
                 if (currentRoute != "settings") {

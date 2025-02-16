@@ -31,8 +31,10 @@
 
     <!-- Permiso para recibir el evento de BOOT_COMPLETED (reinicio) -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
+    <!-- Permiso ficticio para dataSync si fuera necesario (Android 14+),
+         en caso de usar foregroundServiceType="dataSync" -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <application
         android:allowBackup="true"
@@ -80,22 +82,27 @@
             android:foregroundServiceType="mediaPlayback"
             tools:ignore="ForegroundServicePermission" />
 
+        <!-- Servicio fijo para indicar "Monitoreando Alertas" en segundo plano -->
         <service
             android:name=".ui.theme.alarm.FixedAlertService"
             android:exported="false"
             android:foregroundServiceType="dataSync"
             tools:ignore="ForegroundServicePermission" />
+
+        <!-- Clave para Google Maps (modificar con tu valor real si lo usas) -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyDk8lh6tqyDwE8UVP4XHZrHBGRy29v5MWI" />
 
-        <!-- Receiver para reiniciar la app tras BOOT_COMPLETED (si AutoStart está permitido) -->
+        <!-- Receiver para reiniciar la app tras BOOT_COMPLETED o LOCKED_BOOT_COMPLETED -->
         <receiver
             android:name=".broadcast.BootReceiver"
             android:exported="true"
-            android:enabled="true">
+            android:enabled="true"
+            android:directBootAware="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 

@@ -6,9 +6,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,8 +31,18 @@ fun HomeScreen() {
     // Nombre del usuario actual
     val miUserName = FirebaseAuth.getInstance().currentUser?.displayName ?: "Desconocido"
 
-    // Animación del botón de “Activar Alerta”
+    // Estado para animación al activar la alerta
     var isPressed by remember { mutableStateOf(false) }
+
+    // Estado para mostrar el diálogo de confirmación
+    var showConfirmDialog by remember { mutableStateOf(false) }
+
+    // Estados para reflejar lo que hay en Realtime Database
+    var active by remember { mutableStateOf(false) }
+    var triggeredBy by remember { mutableStateOf("") }
+    var triggeredByName by remember { mutableStateOf("Alguien") }
+
+    // Animación del botón de “Activar Alerta”
     val scale by animateFloatAsState(
         targetValue = if (isPressed) 0.8f else 1f,
         animationSpec = tween(durationMillis = 150)
@@ -43,13 +51,14 @@ fun HomeScreen() {
     // Referencia en Realtime Database
     val dbRef = FirebaseDatabase.getInstance().getReference("alarmState")
 
-    // Escuchamos cambios en /alarmState
+    // Escuchamos cambios en /alarmState y actualizamos 'active', 'triggeredBy', etc.
     LaunchedEffect(Unit) {
         dbRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val active = snapshot.child("active").getValue(Boolean::class.java) ?: false
-                val triggeredBy = snapshot.child("triggeredBy").getValue(String::class.java) ?: ""
-                val triggeredByName = snapshot.child("triggeredByName").getValue(String::class.java) ?: "Alguien"
+                active = snapshot.child("active").getValue(Boolean::class.java) ?: false
+                triggeredBy = snapshot.child("triggeredBy").getValue(String::class.java) ?: ""
+                triggeredByName =
+                    snapshot.child("triggeredByName").getValue(String::class.java) ?: "Alguien"
 
                 if (active) {
                     // ALARMA ACTIVA
@@ -81,6 +90,7 @@ fun HomeScreen() {
                     context.stopService(intentNoLoc)
                 }
             }
+
             override fun onCancelled(error: DatabaseError) {}
         })
     }
@@ -92,9 +102,38 @@ fun HomeScreen() {
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
+            // Diálogo de confirmación para activar alerta
+            if (showConfirmDialog) {
+                AlertDialog(
+                    onDismissRequest = { showConfirmDialog = false },
+                    title = { Text("¿Activar Alerta?") },
+                    text = { Text("¿Estás seguro de que quieres activar la alarma?") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            showConfirmDialog = false
+                            // Si confirma, disparamos la animación
+                            isPressed = true
+                        }) {
+                            Text("Sí")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = {
+                            // Cancela
+                            showConfirmDialog = false
+                        }) {
+                            Text("No")
+                        }
+                    }
+                )
+            }
+
             // Botón para ACTIVAR la alarma
             Button(
-                onClick = { isPressed = true },
+                onClick = {
+                    // En lugar de activar de inmediato, primero se pide confirmación
+                    showConfirmDialog = true
+                },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
                 shape = CircleShape,
                 modifier = Modifier
@@ -105,7 +144,9 @@ fun HomeScreen() {
                         ambientColor = Color.Red,
                         spotColor = Color.Red
                     )
-                    .scale(scale)
+                    .scale(scale),
+                // DESACTIVADO si la alarma ya está activa
+                enabled = !active
             ) {
                 Text(
                     text = "¡Activar Alerta!",
@@ -117,21 +158,24 @@ fun HomeScreen() {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Botón para DESACTIVAR la alarma (solo tendría efecto si YO soy el emisor)
-            Button(
-                onClick = {
-                    // Poner active = false en /alarmState
-                    dbRef.child("active").setValue(false)
-                },
-                shape = CircleShape
-            ) {
-                Text(text = "Desactivar Alarma", fontSize = 16.sp)
+            // Botón para DESACTIVAR la alarma:
+            // Solo lo muestra si la alarma está activa Y YO soy quien la activó.
+            if (active && triggeredBy == miUserId) {
+                Button(
+                    onClick = {
+                        // Poner active = false en /alarmState (solo el emisor puede)
+                        dbRef.child("active").setValue(false)
+                    },
+                    shape = CircleShape
+                ) {
+                    Text(text = "Desactivar Alarma", fontSize = 16.sp)
+                }
             }
         }
     }
 
-    // Cuando el usuario pulsa “Activar Alerta!”, ejecutamos la animación
-    // y luego seteamos la DB con active = true
+    // Cuando el usuario pulsó “Activar Alerta!” y confirmó => isPressed = true
+    // Este efecto ejecuta la animación y luego sube a la DB.
     LaunchedEffect(isPressed) {
         if (isPressed) {
             kotlinx.coroutines.delay(150)
